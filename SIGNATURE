@@ -1,0 +1,62 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.73.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+SHA1 f9e6b3455b9fdc96c4b906c8feee99e9747bb823 Build.PL
+SHA1 9b99e6c4ea29a305d42b57dd3be73f4583d375dd Changelog
+SHA1 28112c20326a1182c540ab237c74abed55147740 MANIFEST
+SHA1 0c58ac86b61d61422cb45ea9bf19673be7727bbe META.json
+SHA1 06bd8f311bb59f1d8d3d8bb8e5428dda2035bbc0 META.yml
+SHA1 2e1294a78d89c05dd9034e3a617abec7a0edfc29 README
+SHA1 70f8d8c7fd79286cfe2c5dbace1eadc9bb38eaee bin/db-iris
+SHA1 7cac64d40685efa058583e79f5ad714f49e5704b lib/Travel/Status/DE/IRIS.pm
+SHA1 734496ee36fc59c592d5e482d0437760f7f11d7d lib/Travel/Status/DE/IRIS/Result.pm
+SHA1 a1888c53d51f1c8ccd7d2396d1b043e138e9a4ee lib/Travel/Status/DE/IRIS/Stations.pm
+SHA1 b5551b04e8bb5d033e6baea76cd5444d9fe7b1e7 scripts/acronyms.pl
+SHA1 536f10c8cf46a751727751db6aae68d9da21120d scripts/acronyms.sh
+SHA1 65c7499f6edef8101392c6e12dfd53333b54ace6 scripts/debug
+SHA1 6cfaebdb4d57688b8ac50f3e840a99a48c15457b t/00-compile-pm.t
+SHA1 3adfc7da6082f15051da7fbda884723388738b61 t/01-compile-pl.t
+SHA1 fd251ffc56ca6e52020c906b61158f78b035679d t/02-compile-pod.t
+SHA1 bb2c2942c1b2f0a53b2f760fb02cc2b1ece5aa16 t/20-iris-class.t
+SHA1 40cff21fd6ce42b8f48d0669518b8a983192d83d t/21-iris-stations.t
+SHA1 8e822c0970f1c24a4c97909f85dd7ef2195f4b35 t/30-iris-const.t
+SHA1 5a137895b613b357cf28a0b995655b788317ccc1 t/31-result-basics.t
+SHA1 d5d60687ac5b56ab3b77c94122220b00904f2c94 t/32-result-messages.t
+SHA1 1db22f443196dfeac3f19b379c7f2d8259bcb7ff t/33_result-route.t
+SHA1 3344c7135d43951efafe877140f3944cb5e1c4b3 t/in/fchg/8000098
+SHA1 62efc9065bec6e0fb9ad0d8d8479c6c97717b4f4 t/in/plan/8000098/140103/20
+SHA1 6f57084f4df5a942052b11dd17bfdd2546038e1e t/in/plan/8000098/140103/21
+SHA1 b988b7ed68de17fa59dbf9e9cee4e41fd2bc683f t/in/plan/8000098/140103/22
+SHA1 3c40f29c7c81a25201fd7797f208dd3119630e34 t/in/plan/8000098/140103/23
+SHA1 4e9a8837768fd373b986f48869bfd52fefb09d35 t/in/station/EBILP
+SHA1 e2a5e36447b697146055ed814c024185a98cfa6b t/in/station/EE
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iQIcBAEBCgAGBQJS4k9qAAoJEBANW/tRZuAFIKEP/2McGZLf5Ey8rlm3Udrbz1Fl
+SnviCNYIIzqsa0tpdorpe0RYl5/Wokd0+LKbvxuupn1m3UjGB9xt/W2VWjar/AlC
++c8ESvLyWvF3zsIPmuM3mPDtzqsJQH1hG+y6nXoN0gUVtZWYobdKhUJeewgTYdH9
+Lwx0xJPjxI+lWYChAr1aHb+ZsbNEDsvrvIBK07HZ9dzYx8EWRPcIXfPwwjfx/W/5
+fK4c9m0Xladeh3B98VtsoVl0nJ78TOPnqPFZ7Rc9z24c7r+hiy7qxdIM39zopQG9
+7K7bzDJ7Gs0D8zO+LbrRVpiHQgUqGnfjkpJ3P/W9LJGW6NKw5l+9Pmz2tgxwQHIO
+RU3t17HP0iU9RzOY8vZGW6zYE8ilSZKV1htg7LARuVn2Qr3L0tF4w6v+Kj3zSMQD
+m/nZgM2TvmFIG5K9pJkUQ88GaTv3y6GjIgrPd7vvzcuoLGGo64XzT5PWa70yvMc+
+wWuE4MAGyRa/XC+TiAfRiyP79E4JIkIRMryO+erZJ+a0hKZN3UC7nHE42sdimpvn
+4WuN5hOju1xFw50hkf98z2PohBwosB/BCc5y4AFruUYIPjiUX2rP+NYFAWx3uJ6g
+6PbTnwyFKsv7x/n8IAX1gxlSA0lyBF7Q8cWjh2Hbz1K8+Uur3D3D4RDNu4j6FpVP
+qgwvlTD63KU7jQL/hs5F
+=erho
+-----END PGP SIGNATURE-----

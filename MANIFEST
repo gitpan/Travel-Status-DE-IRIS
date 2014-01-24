@@ -1,0 +1,30 @@
+bin/db-iris
+Build.PL
+Changelog
+lib/Travel/Status/DE/IRIS.pm
+lib/Travel/Status/DE/IRIS/Result.pm
+lib/Travel/Status/DE/IRIS/Stations.pm
+MANIFEST			This list of files
+README
+scripts/acronyms.pl
+scripts/acronyms.sh
+scripts/debug
+t/00-compile-pm.t
+t/01-compile-pl.t
+t/02-compile-pod.t
+t/20-iris-class.t
+t/21-iris-stations.t
+t/30-iris-const.t
+t/31-result-basics.t
+t/32-result-messages.t
+t/33_result-route.t
+t/in/fchg/8000098
+t/in/plan/8000098/140103/20
+t/in/plan/8000098/140103/21
+t/in/plan/8000098/140103/22
+t/in/plan/8000098/140103/23
+t/in/station/EBILP
+t/in/station/EE
+META.yml
+META.json
+SIGNATURE    Added here by Module::Build

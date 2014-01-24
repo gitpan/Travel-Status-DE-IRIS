@@ -1,0 +1,67 @@
+{
+   "abstract" : "Interface to IRIS based web departure monitors.",
+   "author" : [
+      "Copyright (C) 2013-2014 by Daniel Friesel E<lt>derf@finalrewind.orgE<gt>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Travel-Status-DE-IRIS",
+   "prereqs" : {
+      "build" : {
+         "requires" : {
+            "Test::Compile" : "0",
+            "Test::Fatal" : "0",
+            "Test::More" : "0",
+            "Test::Pod" : "0"
+         }
+      },
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.4"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Carp" : "0",
+            "Class::Accessor" : "0",
+            "DateTime" : "0",
+            "DateTime::Format::Strptime" : "0",
+            "Encode" : "0",
+            "Getopt::Long" : "0",
+            "LWP::UserAgent" : "0",
+            "List::MoreUtils" : "0",
+            "List::Util" : "0",
+            "XML::LibXML" : "0",
+            "perl" : "v5.14.2"
+         }
+      }
+   },
+   "provides" : {
+      "Travel::Status::DE::IRIS" : {
+         "file" : "lib/Travel/Status/DE/IRIS.pm",
+         "version" : "0.01"
+      },
+      "Travel::Status::DE::IRIS::Result" : {
+         "file" : "lib/Travel/Status/DE/IRIS/Result.pm",
+         "version" : "0.01"
+      },
+      "Travel::Status::DE::IRIS::Stations" : {
+         "file" : "lib/Travel/Status/DE/IRIS/Stations.pm",
+         "version" : "0.01"
+      }
+   },
+   "release_status" : "stable",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ]
+   },
+   "version" : "0.01"
+}
