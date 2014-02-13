@@ -19,13 +19,13 @@ name: Travel-Status-DE-IRIS
 provides:
   Travel::Status::DE::IRIS:
     file: lib/Travel/Status/DE/IRIS.pm
-    version: 0.02
+    version: 0.03
   Travel::Status::DE::IRIS::Result:
     file: lib/Travel/Status/DE/IRIS/Result.pm
-    version: 0.02
+    version: 0.03
   Travel::Status::DE::IRIS::Stations:
     file: lib/Travel/Status/DE/IRIS/Stations.pm
-    version: 0.02
+    version: 0.03
 requires:
   Carp: 0
   Class::Accessor: 0
@@ -40,4 +40,4 @@ requires:
   perl: v5.14.2
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.02
+version: 0.03

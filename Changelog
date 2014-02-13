@@ -1,3 +1,13 @@
+Travel::Status::DE::IRIS 0.03 - Fri Feb 14 2014
+
+    * IRIS / db-iris: Add lookahead option
+    * db-iris: Fix --via not matching destination of trains with incomplete
+      route data
+    * Detect and merge duplicate results caused by train ID changes
+    * Result: Provide realtime data in ->platform, add ->sched_platform
+      accessor
+    * db-iris: indicate platform changes with an exclamation mark
+
 Travel::Status::DE::IRIS 0.02 - Mon Feb 03 2014
 
     * Fix warnings when encountering unplanned (fchg-only) trains without

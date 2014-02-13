@@ -6,7 +6,7 @@ use utf8;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -17,7 +17,7 @@ use List::MoreUtils qw(none);
 use Travel::Status::DE::IRIS;
 use Travel::Status::DE::IRIS::Stations;
 
-my ( $date, $time );
+my ( $date, $time, $lookahead );
 my $datetime = DateTime->now( time_zone => 'Europe/Berlin' );
 my $realtime = 0;
 my ( $filter_via, $track_via, $status_via );
@@ -34,6 +34,7 @@ GetOptions(
 	'c|class=s@'    => \@grep_class,
 	'd|date=s'      => \$date,
 	'h|help'        => sub { show_help(0) },
+	'l|lookahead=i' => \$lookahead,
 	'o|output=s@'   => \@edata_pre,
 	'p|platform=s@' => \@grep_platform,
 	'r|realtime'    => \$realtime,
@@ -93,10 +94,14 @@ for my $efield (@edata_pre) {
 }
 
 my $status = Travel::Status::DE::IRIS->new(
-	datetime => $datetime,
-	station  => $station,
+	datetime  => $datetime,
+	lookahead => $lookahead,
+	station   => $station,
 );
 if ($track_via) {
+
+	# lookahead should not be used here - the via stop is reached an unknown
+	# amount of time later
 	$status_via = Travel::Status::DE::IRIS->new(
 		datetime => $datetime,
 		station  => $track_via,
@@ -223,8 +228,9 @@ sub display_result {
 			else {
 				printf(
 					"%5s → %5s  %+d\n",
-					get_arrival( $d, '%H:%M' ),
-					get_departure( $d, '%H:%M' ), $d->delay,
+					$d->arrival   ? $d->arrival->strftime('%H:%M')   : q{},
+					$d->departure ? $d->departure->strftime('%H:%M') : q{},
+					$d->delay,
 				);
 			}
 
@@ -266,7 +272,8 @@ for my $d ( $status->results() ) {
 
 	my @via;
 
-	@via = $d->route_post;
+	# route may be incomplete, so check route_end as well
+	@via = ( $d->route_post, $d->route_end );
 
 	if (   ( $filter_via and not( first { $_ =~ m{$filter_via}io } @via ) )
 		or ( @grep_class and none { $_ ~~ \@grep_class } $d->classes )
@@ -286,6 +293,9 @@ for my $d ( $status->results() ) {
 	}
 
 	my $platformstr = $d->platform // q{};
+	if ( ( $d->platform // q{} ) ne ( $d->sched_platform // q{} ) ) {
+		$platformstr .= ' !';
+	}
 	my $timestr;
 	if ($track_via) {
 		$timestr = get_departure( $d, '%H:%M' ) || get_arrival( $d, '%H:%M' );
@@ -342,7 +352,7 @@ I<station>
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 DESCRIPTION
 
@@ -355,6 +365,9 @@ either a DS100 station code (such as "EE") or a normal station name
 (such as "Essen Hbf" or "DO UniversitE<auml>t"). If no exact match is found,
 B<db-iris> will try to find station names containing I<station> as a
 substring.
+
+An exclamation mark (C<< ! >>) next to a platform indicates that it is not the
+scheduled one.
 
 =head1 OPTIONS
 
@@ -377,6 +390,16 @@ Valid classes are:
 Request results for I<date> in dd.mm. oder dd.mm.YYYY format. Note that only
 slight (a few hours max) deviations from the current time are supported by the
 IRIS backend, larger ones will not return data.
+
+=item B<-l>, B<--lookahead> I<int>
+
+Return only those results which are less than I<int> minutes in the future.
+Defaults to 240 (4 hours).
+
+Note that this is only an upper limit, not a guarantee to get every train
+with a departure in less than I<int> minutes. This guarantee holds only for
+I<int> below 120. However, any non-negative number is accepted for this
+option.
 
 =item B<-o>, B<--output> I<outputtypes>
 
@@ -427,7 +450,7 @@ Show both scheduled and expected arrival and departure times.
 =item B<-p>, B<--platforms> I<platforms>
 
 Only show arrivals/departures at I<platforms> (comma-separated list, option may
-be repeated).
+be repeated).  This applies to actual departures, not schedules.
 
 =item B<-r>, B<--realtime>
 

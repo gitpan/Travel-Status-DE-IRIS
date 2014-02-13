@@ -6,7 +6,7 @@ use 5.014;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Carp qw(confess cluck);
 use DateTime;
@@ -30,7 +30,8 @@ sub new {
 		  // DateTime->now( time_zone => 'Europe/Berlin' ),
 		iris_base => $opt{iris_base}
 		  // 'http://iris.noncd.db.de/iris-tts/timetable',
-		station    => $opt{station},
+		lookahead => $opt{lookahead} // ( 4 * 60 ),
+		station => $opt{station},
 		user_agent => $ua,
 	};
 
@@ -64,11 +65,30 @@ sub new {
 
 	$self->get_realtime;
 
+	# tra (transfer?) indicates a train changing its ID, so there are two
+	# results for the same train. Remove the departure-only trains from the
+	# result set and merge them with their arrival-only counterpairt.
+	# This way, in case the arrival is available but the departure isn't,
+	# nothing gets lost.
+	my @merge_candidates
+	  = grep { $_->transfer and $_->departure } @{ $self->{results} };
+	@{ $self->{results} }
+	  = grep { not( $_->transfer and $_->departure ) } @{ $self->{results} };
+
+	for my $transfer (@merge_candidates) {
+		my $result
+		  = first { $_->transfer and $_->transfer eq $transfer->train_id }
+		@{ $self->{results} };
+		if ($result) {
+			$result->merge_with_departure($transfer);
+		}
+	}
+
 	@{ $self->{results} } = grep {
 		my $d
 		  = ( $_->departure // $_->arrival )
 		  ->subtract_datetime( $self->{datetime} );
-		not $d->is_negative and $d->in_units('hours') < 4
+		not $d->is_negative and $d->in_units('minutes') < $self->{lookahead}
 	} @{ $self->{results} };
 
 	@{ $self->{results} }
@@ -105,6 +125,7 @@ sub add_result {
 		$data{platform}    = $e_ar->getAttribute('pp');    # string, not number!
 		$data{route_pre}   = $e_ar->getAttribute('ppth');
 		$data{route_start} = $e_ar->getAttribute('pde');
+		$data{transfer}    = $e_ar->getAttribute('tra');
 		$data{arrival_wings} = $e_ar->getAttribute('wings');
 	}
 
@@ -113,6 +134,7 @@ sub add_result {
 		$data{platform}     = $e_dp->getAttribute('pp');   # string, not number!
 		$data{route_post}   = $e_dp->getAttribute('ppth');
 		$data{route_end}    = $e_dp->getAttribute('pde');
+		$data{transfer}     = $e_dp->getAttribute('tra');
 		$data{departure_wings} = $e_dp->getAttribute('wings');
 	}
 
@@ -273,7 +295,7 @@ Travel::Status::DE::IRIS - Interface to IRIS based web departure monitors.
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 DESCRIPTION
 
@@ -302,6 +324,18 @@ current date and time.
 =item B<iris_base> => I<url>
 
 IRIS base url, defaults to C<< http://iris.noncd.db.de/iris-tts/timetable >>.
+
+=item B<lookahead> => I<int>
+
+Compute only those results which are less than I<int> minutes in the future.
+Default: 240 (4 hours).
+
+Note that the DeutscheBahn IRIS backend only provides schedules up to four
+to five hours into the future, and this module only requests data for up to
+three hours. So in most cases, setting this to a value above 180 minutes will
+have no effect. However, as the IRIS occasionally contains unscheduled
+departures or qos messages known far in advance (e.g. 12 hours from now), any
+non-negative integer is accepted.
 
 =item B<station> => I<stationcode>
 

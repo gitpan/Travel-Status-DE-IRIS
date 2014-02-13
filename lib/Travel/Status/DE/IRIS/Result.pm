@@ -13,13 +13,14 @@ use DateTime;
 use DateTime::Format::Strptime;
 use List::MoreUtils qw(none uniq firstval);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 Travel::Status::DE::IRIS::Result->mk_ro_accessors(
-	qw(arrival classes date datetime delay departure is_cancelled line_no
-	  platform raw_id realtime_xml route_start route_end sched_arrival
-	  sched_departure sched_route_start sched_route_end start stop_no time
-	  train_id train_no type unknown_t unknown_o)
+	qw(arrival classes date datetime delay departure is_cancelled is_transfer
+	  line_no old_train_id old_train_no platform raw_id realtime_xml
+	  route_start route_end sched_arrival sched_departure sched_platform
+	  sched_route_start sched_route_end start stop_no time train_id train_no
+	  transfer type unknown_t unknown_o)
 );
 
 sub new {
@@ -34,10 +35,18 @@ sub new {
 
 	my ( $train_id, $start_ts, $stop_no ) = split( /.\K-/, $opt{raw_id} );
 
+	$train_id =~ s{^-}{};
+
 	$ref->{start} = $strp->parse_datetime($start_ts);
 
 	$ref->{train_id} = $train_id;
 	$ref->{stop_no}  = $stop_no;
+
+	if ( $opt{transfer} ) {
+		my ($transfer) = split( /.\K-/, $opt{transfer} );
+		$transfer =~ s{^-}{};
+		$ref->{transfer} = $transfer;
+	}
 
 	my $ar = $ref->{arrival} = $ref->{sched_arrival}
 	  = $strp->parse_datetime( $opt{arrival_ts} );
@@ -67,6 +76,7 @@ sub new {
 	$ref->{route_pre_incomplete}  = $ref->{route_end}  ? 1 : 0;
 	$ref->{route_post_incomplete} = $ref->{route_post} ? 1 : 0;
 
+	$ref->{sched_platform} = $ref->{platform};
 	$ref->{route_end}
 	  = $ref->{sched_route_end}
 	  = $ref->{route_end}
@@ -98,6 +108,10 @@ sub add_ar {
 		  ->in_units('minutes');
 	}
 
+	if ( $attrib{platform} ) {
+		$self->{platform} = $attrib{platform};
+	}
+
 	if ( $attrib{route_pre} ) {
 		$self->{route_pre} = [ split( qr{[|]}, $attrib{route_pre} // q{} ) ];
 		$self->{route_start} = $self->{route_pre}[0];
@@ -123,6 +137,10 @@ sub add_dp {
 		$self->{delay}
 		  = $self->departure->subtract_datetime( $self->sched_departure )
 		  ->in_units('minutes');
+	}
+
+	if ( $attrib{platform} ) {
+		$self->{platform} = $attrib{platform};
 	}
 
 	if ( $attrib{route_post} ) {
@@ -157,6 +175,36 @@ sub add_tl {
 	my ( $self, %attrib ) = @_;
 
 	# TODO
+
+	return $self;
+}
+
+sub merge_with_departure {
+	my ( $self, $result ) = @_;
+
+	# result must be departure-only
+
+	$self->{is_transfer} = 1;
+
+	$self->{old_train_id} = $self->{train_id};
+	$self->{old_train_no} = $self->{train_no};
+
+	# departure is preferred over arrival, so overwrite default values
+	$self->{date}     = $result->{date};
+	$self->{time}     = $result->{time};
+	$self->{datetime} = $result->{datetime};
+	$self->{train_id} = $result->{train_id};
+	$self->{train_no} = $result->{train_no};
+
+	$self->{departure}        = $result->{departure};
+	$self->{departure_wings}  = $result->{departure_wings};
+	$self->{route_end}        = $result->{route_end};
+	$self->{route_post}       = $result->{route_post};
+	$self->{sched_departure}  = $result->{sched_departure};
+	$self->{sched_route_post} = $result->{sched_route_post};
+
+	# update realtime info only if applicable
+	$self->{is_cancelled} ||= $result->{is_cancelled};
 
 	return $self;
 }
@@ -466,7 +514,7 @@ arrival/departure received by Travel::Status::DE::IRIS
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 DESCRIPTION
 
@@ -541,6 +589,19 @@ broken toilets.
 True if the train was cancelled, false otherwise. Note that this does not
 contain information about replacement trains or route diversions.
 
+=item $result->is_transfer
+
+True if the train changes its ID at the current station, false otherwise.
+
+An ID change means: There are two results in the system (e.g. RE 10228
+ME<uuml>nster -> Duisburg, RE 30028 Duisburg -> DE<uuml>sseldorf), but they are
+the same train (RE line 2 from ME<uuml>nster to DE<uuml>sseldorf in this case)
+and should be treated as such. In this case, Travel::Status::DE::IRIS merges
+the results and indicates it by setting B<is_transfer> to a true value.
+
+In case of a transfer, B<train_id> and B<train_no> are set to the "new"
+value, the old ones are available in B<old_train_id> and B<old_train_no>.
+
 =item $result->line
 
 Train type with line (such as C<< S 1 >>) if available, type with number
@@ -563,6 +624,18 @@ DateTime(3pm) object corresponding to the point in time when the message was
 entered, the string is the message. Note that neither duplicates nor superseded
 messages are filtered from this list.
 
+=item $result->old_train_id
+
+Numeric ID of the pre-transfer train. Seems to be unique for a year and
+trackable across stations. Only defined if a transfer took place,
+see also B<is_transfer>.
+
+=item $result->old_train_no
+
+Number of the pre-tarnsfer train, unique per day. E.g. C<< 2225 >> for
+C<< IC 2225 >>. See also B<is_transfer>. Only defined if a transfer took
+place, see also B<is_transfer>.
+
 =item $result->origin
 
 Alias for route_start.
@@ -577,7 +650,7 @@ case of a duplicate, only the most recent message is present)
 
 =item $result->platform
 
-Arrivel/departure platform as string, undef if unknown. Note that this is
+Arrival/departure platform as string, undef if unknown. Note that this is
 not neccessarily a number, platform sections may be included (e.g.
 C<< 3a/b >>).
 
@@ -637,6 +710,12 @@ train starts here.
 
 DateTime(3pm) object for the scehduled departure date and time. undef if the
 train ends here.
+
+=item $result->sched_platform
+
+Scheduled Arrival/departure platform as string, undef if unknown. Note that
+this is not neccessarily a number, platform sections may be included (e.g.  C<<
+3a/b >>).
 
 =item $result->sched_route
 
