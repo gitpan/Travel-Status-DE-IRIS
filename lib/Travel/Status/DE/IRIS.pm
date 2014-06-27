@@ -6,7 +6,7 @@ use 5.014;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Carp qw(confess cluck);
 use DateTime;
@@ -31,8 +31,9 @@ sub new {
 		iris_base => $opt{iris_base}
 		  // 'http://iris.noncd.db.de/iris-tts/timetable',
 		lookahead => $opt{lookahead} // ( 4 * 60 ),
-		station => $opt{station},
-		user_agent => $ua,
+		serializable => $opt{serializable},
+		station      => $opt{station},
+		user_agent   => $ua,
 	};
 
 	bless( $self, $class );
@@ -42,7 +43,8 @@ sub new {
 	my $res_st = $ua->get( $self->{iris_base} . '/station/' . $opt{station} );
 
 	if ( $res_st->is_error ) {
-		$self->{errstr} = $res_st->status_line;
+		$self->{errstr} = 'Failed to fetch station data: Server returned '
+		  . $res_st->status_line;
 		return $self;
 	}
 
@@ -158,7 +160,8 @@ sub get_timetable {
 		$dt->strftime( $self->{iris_base} . "/plan/${eva}/%y%m%d/%H" ) );
 
 	if ( $res->is_error ) {
-		$self->{errstr} = $res->status_line;
+		$self->{warnstr} = 'Failed to fetch a schedule part: Server returned '
+		  . $res->status_line;
 		return $self;
 	}
 
@@ -183,7 +186,8 @@ sub get_realtime {
 	my $res = $self->{user_agent}->get( $self->{iris_base} . "/fchg/${eva}" );
 
 	if ( $res->is_error ) {
-		$self->{errstr} = $res->status_line;
+		$self->{warnstr} = 'Failed to fetch realtime data: Server returned '
+		  . $res->status_line;
 		return $self;
 	}
 
@@ -192,11 +196,12 @@ sub get_realtime {
 	my $station = ( $xml->findnodes('/timetable') )[0]->getAttribute('station');
 
 	for my $s ( $xml->findnodes('/timetable/s') ) {
-		my $id   = $s->getAttribute('id');
-		my $e_tl = ( $s->findnodes('./tl') )[0];
-		my $e_ar = ( $s->findnodes('./ar') )[0];
-		my $e_dp = ( $s->findnodes('./dp') )[0];
-		my @e_ms = $s->findnodes('.//m');
+		my $id    = $s->getAttribute('id');
+		my $e_tl  = ( $s->findnodes('./tl') )[0];
+		my $e_ar  = ( $s->findnodes('./ar') )[0];
+		my $e_dp  = ( $s->findnodes('./dp') )[0];
+		my $e_ref = ( $s->findnodes('./ref') )[0];
+		my @e_ms  = $s->findnodes('.//m');
 
 		my %messages;
 
@@ -209,7 +214,9 @@ sub get_realtime {
 			next;
 		}
 
-		$result->add_realtime($s);
+		if ( not $self->{serializable} ) {
+			$result->add_realtime($s);
+		}
 
 		for my $e_m (@e_ms) {
 			my $type  = $e_m->getAttribute('t');
@@ -232,6 +239,16 @@ sub get_realtime {
 				type      => $e_tl->getAttribute('c'),    # S/ICE/ERB/...
 				line_no   => $e_tl->getAttribute('l'),    # 1 -> S1, ...
 				unknown_o => $e_tl->getAttribute('o'),    # owner: 03/80/R2/...
+			);
+		}
+		if ($e_ref) {
+			$result->add_ref(
+				class     => $e_ref->getAttribute('f'),    # D N S F
+				unknown_t => $e_ref->getAttribute('t'),    # p
+				train_no  => $e_ref->getAttribute('n'),    # dep number
+				type      => $e_ref->getAttribute('c'),    # S/ICE/ERB/...
+				line_no   => $e_ref->getAttribute('l'),    # 1 -> S1, ...
+				unknown_o => $e_ref->getAttribute('o'),    # owner: 03/80/R2/...
 			);
 		}
 		if ($e_ar) {
@@ -268,6 +285,12 @@ sub results {
 	return @{ $self->{results} // [] };
 }
 
+sub warnstr {
+	my ($self) = @_;
+
+	return $self->{warnstr};
+}
+
 1;
 
 __END__
@@ -295,7 +318,7 @@ Travel::Status::DE::IRIS - Interface to IRIS based web departure monitors.
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 DESCRIPTION
 
@@ -350,13 +373,18 @@ All other options are passed to the LWP::UserAgent(3pm) constructor.
 
 =item $status->errstr
 
-In case of an HTTP request or IRIS error, returns a string describing it.
+In case of a fatal HTTP request or IRIS error, returns a string describing it.
 Returns undef otherwise.
 
 =item $status->results
 
 Returns a list of Travel::Status::DE::IRIS(3pm) objects, each one describing
 one arrival and/or departure.
+
+=item $status->warnstr
+
+In case of a (probably) non-fatal HTTP request or IRIS error, returns a string
+describing it.  Returns undef otherwise.
 
 =back
 

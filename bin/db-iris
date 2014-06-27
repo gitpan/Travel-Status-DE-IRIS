@@ -6,7 +6,7 @@ use utf8;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -259,11 +259,18 @@ if ( my $err = $status->errstr ) {
 	say STDERR "Request error: ${err}";
 	exit 2;
 }
+if ( my $warning = $status->warnstr ) {
+	say STDERR "Request warning: ${warning}";
+}
 
 if ( $status_via and $status_via->errstr ) {
 	my $err = $status_via->errstr;
-	say STDERR "Request error: ${err}";
+	say STDERR "Request error in --via : ${err}";
 	exit 2;
+}
+if ( $status_via and $status_via->warnstr ) {
+	my $warning = $status_via->warnstr;
+	say STDERR "Request warning in --via : ${warning}";
 }
 
 sanitize_options();
@@ -302,7 +309,11 @@ for my $d ( $status->results() ) {
 		if ( not $d->departure ) {
 			next;
 		}
-		my $d_via = first { $_->train_id eq $d->train_id } $status_via->results;
+		my $d_via = first {
+			$_->train_id eq $d->train_id
+			  or ( $_->old_train_id and $_->old_train_id eq $d->train_id );
+		}
+		$status_via->results;
 		if (   not $d_via
 			or not $d_via->sched_arrival
 			or $d_via->sched_arrival < $d->departure )
@@ -352,7 +363,7 @@ I<station>
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 DESCRIPTION
 

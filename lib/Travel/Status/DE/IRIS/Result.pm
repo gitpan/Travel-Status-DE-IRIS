@@ -13,14 +13,14 @@ use DateTime;
 use DateTime::Format::Strptime;
 use List::MoreUtils qw(none uniq firstval);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 Travel::Status::DE::IRIS::Result->mk_ro_accessors(
 	qw(arrival classes date datetime delay departure is_cancelled is_transfer
-	  line_no old_train_id old_train_no platform raw_id realtime_xml
-	  route_start route_end sched_arrival sched_departure sched_platform
-	  sched_route_start sched_route_end start stop_no time train_id train_no
-	  transfer type unknown_t unknown_o)
+	  line_no train_no_transfer old_train_id old_train_no platform raw_id
+	  realtime_xml route_start route_end sched_arrival sched_departure
+	  sched_platform sched_route_start sched_route_end start stop_no time
+	  train_id train_no transfer type unknown_t unknown_o)
 );
 
 sub new {
@@ -167,6 +167,16 @@ sub add_realtime {
 	my ( $self, $xmlobj ) = @_;
 
 	$self->{realtime_xml} = $xmlobj;
+
+	return $self;
+}
+
+sub add_ref {
+	my ( $self, %attrib ) = @_;
+
+	$self->{train_no_transfer} = $attrib{train_no};
+
+	# TODO
 
 	return $self;
 }
@@ -461,7 +471,9 @@ sub translate_msg {
 		46 => 'Warten auf freie Einfahrt',
 		47 => 'Verspätete Bereitstellung',
 		48 => 'Verspätung aus vorheriger Fahrt',
+		64 => 'Weichenstörung',
 		55 => 'Technische Störung an einem anderen Zug',        # ?
+		57 => 'Zusätzlicher Halt',                              # ?
 		80 => 'Abweichende Wagenreihung',
 		82 => 'Mehrere Wagen fehlen',
 		83 => 'Fehlender Zugteil',
@@ -476,6 +488,8 @@ sub translate_msg {
 		91 => 'Eingeschränkte Fahrradmitnahme',
 		92 => 'Klimaanlage in einzelnen Wagen ausgefallen',
 		93 => 'Fehlende oder gestörte behindertengerechte Einrichtung',
+		94 => 'Ersatzbewirtschaftung',
+		95 => 'Ohne behindertengerechtes WC',
 		96 => 'Der Zug ist überbesetzt',
 		97 => 'Der Zug ist überbesetzt',
 		98 => 'Sonstige Qualitätsmängel',
@@ -514,7 +528,7 @@ arrival/departure received by Travel::Status::DE::IRIS
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 DESCRIPTION
 
@@ -766,6 +780,15 @@ stations.
 
 Number of this train, unique per day. E.g. C<< 2225 >> for C<< IC 2225 >>.
 
+=item $result->train_no_transfer
+
+Number of this train after a following transfer, undefined if no such transfer
+exists. See B<is_transfer> for a note about this.
+
+Note that unlike B<old_train_no>, this information is always based on realtime
+data (not included in any schedule) and only set for stations before the
+transfer station, not the transfer station itself.
+
 =item $result->type
 
 Type of this train, e.g. C<< S >> for S-Bahn, C<< RE >> for Regional-Express,
@@ -874,6 +897,15 @@ Source: Correlation between IRIS and DB RIS (bahn.de).
 
 Source: Correlation between IRIS and DB RIS (bahn.de).
 
+=item d 57 : "ZusE<auml>tzlicher Halt"
+
+Source: Correlation between IRIS and DB RIS (bahn.de). Only one entry so far,
+so may be wrong.
+
+=item d 64 : "WeichenstE<ouml>rung"
+
+Source: correlation between IRIS and DB RIS (bahn.de).
+
 =item q 80 : "Abweichende Wagenreihung"
 
 Verified by L<https://iris.noncd.db.de/irisWebclient/Configuration>.
@@ -934,6 +966,14 @@ Might also mean "Rollstuhlgerechtes WC in einem Wagen ausgefallen"
 
 Verified by L<https://iris.noncd.db.de/irisWebclient/Configuration>.
 Might also mean "Kein rollstuhlgerechtes WC" (source: frubi).
+
+=item q 94 : "Ersatzbewirtschaftung"
+
+Estimated from a comparison with bahn.de/ris messages. Needs to be verified.
+
+=item q 95 : "Ohne behindertengerechtes WC"
+
+Estimated from a comparison with bahn.de/iris messages.
 
 =item q 96 : "Der Zug ist E<uuml>berbesetzt"
 
