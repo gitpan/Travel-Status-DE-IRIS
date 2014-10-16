@@ -4,7 +4,7 @@
       "Copyright (C) 2013-2014 by Daniel Friesel E<lt>derf@finalrewind.orgE<gt>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4003, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Module::Build version 0.421",
    "license" : [
       "perl_5"
    ],
@@ -46,15 +46,15 @@
    "provides" : {
       "Travel::Status::DE::IRIS" : {
          "file" : "lib/Travel/Status/DE/IRIS.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Travel::Status::DE::IRIS::Result" : {
          "file" : "lib/Travel/Status/DE/IRIS/Result.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "Travel::Status::DE::IRIS::Stations" : {
          "file" : "lib/Travel/Status/DE/IRIS/Stations.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -63,5 +63,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.04"
+   "version" : "0.05"
 }

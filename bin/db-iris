@@ -6,7 +6,7 @@ use utf8;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -363,7 +363,7 @@ I<station>
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 DESCRIPTION
 
@@ -482,7 +482,6 @@ causes all arrivals/departures whose type is not in I<typelist> to be discarded.
 The following valid values are known:
 
     local transport:
-    IR   Inter-Regio (rare in Germany, mostly used in Switzerland)
     IRE  Inter-Regio Express (rare)
     RB   Regionalbahn (slower than RE)
     RE   Regional-Express
@@ -492,6 +491,7 @@ The following valid values are known:
     D    "Schnellzug" (generic fast train, rare)
     EC   Eurocity
     IC   Intercity
+    IR   Inter-Regio (rare in Germany, mostly used in Switzerland)
     ICE  Intercity-Express
     THA  Thalys
 

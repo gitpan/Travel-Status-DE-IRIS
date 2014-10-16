@@ -13,7 +13,7 @@ use DateTime;
 use DateTime::Format::Strptime;
 use List::MoreUtils qw(none uniq firstval);
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 Travel::Status::DE::IRIS::Result->mk_ro_accessors(
 	qw(arrival classes date datetime delay departure is_cancelled is_transfer
@@ -440,6 +440,7 @@ sub translate_msg {
 		6  => 'Betätigen der Notbremse',
 		7  => 'Personen im Gleis',
 		8  => 'Notarzteinsatz am Gleis',
+		9  => 'Streikauswirkungen',
 		10 => 'Ausgebrochene Tiere im Gleis',
 		11 => 'Unwetter',
 		15 => 'Beeinträchtigung durch Vandalismus',
@@ -474,6 +475,8 @@ sub translate_msg {
 		64 => 'Weichenstörung',
 		55 => 'Technische Störung an einem anderen Zug',        # ?
 		57 => 'Zusätzlicher Halt',                              # ?
+		58 => 'Umleitung(?)',                                   # ?
+		63 => 'Technische Untersuchung am Zug',
 		80 => 'Abweichende Wagenreihung',
 		82 => 'Mehrere Wagen fehlen',
 		83 => 'Fehlender Zugteil',
@@ -528,7 +531,7 @@ arrival/departure received by Travel::Status::DE::IRIS
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 DESCRIPTION
 
@@ -831,6 +834,8 @@ Source: Correlation between IRIS and DB RIS (bahn.de).
 
 =item d  8 : "Notarzteinsatz am Gleis"
 
+=item d 9 : "Streikauswirkungen"
+
 =item d 10 : "Ausgebrochene Tiere im Gleis"
 
 =item d 11 : "Unwetter"
@@ -901,6 +906,13 @@ Source: Correlation between IRIS and DB RIS (bahn.de).
 
 Source: Correlation between IRIS and DB RIS (bahn.de). Only one entry so far,
 so may be wrong.
+
+=item d 58 : "Umleitung"
+
+Source: Correlation between IRIS and DB RIS (bahn.de). Several entries, related
+to "Notarzteinsatz am Gleis".
+
+=item d 63 : "Technische Untersuchung am Zug"
 
 =item d 64 : "WeichenstE<ouml>rung"
 
