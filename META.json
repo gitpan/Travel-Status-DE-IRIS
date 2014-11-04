@@ -36,6 +36,7 @@
             "Encode" : "0",
             "Getopt::Long" : "0",
             "LWP::UserAgent" : "0",
+            "List::Compare" : "0.29",
             "List::MoreUtils" : "0",
             "List::Util" : "0",
             "XML::LibXML" : "0",
@@ -46,15 +47,15 @@
    "provides" : {
       "Travel::Status::DE::IRIS" : {
          "file" : "lib/Travel/Status/DE/IRIS.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Travel::Status::DE::IRIS::Result" : {
          "file" : "lib/Travel/Status/DE/IRIS/Result.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Travel::Status::DE::IRIS::Stations" : {
          "file" : "lib/Travel/Status/DE/IRIS/Stations.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       }
    },
    "release_status" : "stable",
@@ -63,5 +64,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.05"
+   "version" : "0.06"
 }

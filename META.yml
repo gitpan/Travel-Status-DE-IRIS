@@ -19,13 +19,13 @@ name: Travel-Status-DE-IRIS
 provides:
   Travel::Status::DE::IRIS:
     file: lib/Travel/Status/DE/IRIS.pm
-    version: '0.05'
+    version: '0.06'
   Travel::Status::DE::IRIS::Result:
     file: lib/Travel/Status/DE/IRIS/Result.pm
-    version: '0.05'
+    version: '0.06'
   Travel::Status::DE::IRIS::Stations:
     file: lib/Travel/Status/DE/IRIS/Stations.pm
-    version: '0.05'
+    version: '0.06'
 requires:
   Carp: '0'
   Class::Accessor: '0'
@@ -34,10 +34,11 @@ requires:
   Encode: '0'
   Getopt::Long: '0'
   LWP::UserAgent: '0'
+  List::Compare: '0.29'
   List::MoreUtils: '0'
   List::Util: '0'
   XML::LibXML: '0'
   perl: v5.14.2
 resources:
   license: http://dev.perl.org/licenses/
-version: '0.05'
+version: '0.06'

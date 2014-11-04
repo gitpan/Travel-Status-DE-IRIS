@@ -11,9 +11,10 @@ use parent 'Class::Accessor';
 use Carp qw(cluck);
 use DateTime;
 use DateTime::Format::Strptime;
+use List::Compare;
 use List::MoreUtils qw(none uniq firstval);
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 Travel::Status::DE::IRIS::Result->mk_ro_accessors(
 	qw(arrival classes date datetime delay departure is_cancelled is_transfer
@@ -117,6 +118,12 @@ sub add_ar {
 		$self->{route_start} = $self->{route_pre}[0];
 	}
 
+	if ( $attrib{sched_route_pre} ) {
+		$self->{sched_route_pre}
+		  = [ split( qr{[|]}, $attrib{sched_route_pre} // q{} ) ];
+		$self->{sched_route_start} = $self->{sched_route_pre}[0];
+	}
+
 	if ( $attrib{status} and $attrib{status} eq 'c' ) {
 		$self->{is_cancelled} = 1;
 	}
@@ -146,6 +153,12 @@ sub add_dp {
 	if ( $attrib{route_post} ) {
 		$self->{route_post} = [ split( qr{[|]}, $attrib{route_post} // q{} ) ];
 		$self->{route_end} = $self->{route_post}[-1];
+	}
+
+	if ( $attrib{sched_route_post} ) {
+		$self->{sched_route_post}
+		  = [ split( qr{[|]}, $attrib{sched_route_post} // q{} ) ];
+		$self->{sched_route_end} = $self->{sched_route_post}[-1];
 	}
 
 	if ( $attrib{status} and $attrib{status} eq 'c' ) {
@@ -187,6 +200,53 @@ sub add_tl {
 	# TODO
 
 	return $self;
+}
+
+# List::Compare does not keep the order of its arguments (even with unsorted).
+# So we need to re-sort all stops to maintain their original order.
+sub sorted_sublist {
+	my ( $self, $list, $sublist ) = @_;
+	my %pos;
+
+	if ( not $sublist or not @{$sublist} ) {
+		return;
+	}
+
+	for my $i ( 0 .. $#{$list} ) {
+		$pos{ $list->[$i] } = $i;
+	}
+
+	my @sorted = sort { $pos{$a} <=> $pos{$b} } @{$sublist};
+
+	return @sorted;
+}
+
+sub additional_stops {
+	my ($self) = @_;
+
+	$self->{comparator} //= List::Compare->new(
+		{
+			lists    => [ $self->{sched_route_post}, $self->{route_post} ],
+			unsorted => 1,
+		}
+	);
+
+	return $self->sorted_sublist( $self->{route_post},
+		[ $self->{comparator}->get_complement ] );
+}
+
+sub canceled_stops {
+	my ($self) = @_;
+
+	$self->{comparator} //= List::Compare->new(
+		{
+			lists    => [ $self->{sched_route_post}, $self->{route_post} ],
+			unsorted => 1,
+		}
+	);
+
+	return $self->sorted_sublist( $self->{sched_route_post},
+		[ $self->{comparator}->get_unique ] );
 }
 
 sub merge_with_departure {
@@ -475,7 +535,8 @@ sub translate_msg {
 		64 => 'Weichenstörung',
 		55 => 'Technische Störung an einem anderen Zug',        # ?
 		57 => 'Zusätzlicher Halt',                              # ?
-		58 => 'Umleitung(?)',                                   # ?
+		58 => 'Umleitung(?)',                                    # ?
+		62 => 'Behobene technische Störung am Zug',
 		63 => 'Technische Untersuchung am Zug',
 		80 => 'Abweichende Wagenreihung',
 		82 => 'Mehrere Wagen fehlen',
@@ -531,7 +592,7 @@ arrival/departure received by Travel::Status::DE::IRIS
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 DESCRIPTION
 
@@ -545,10 +606,22 @@ the platform, time, route and more.
 
 =over
 
+=item $result->additional_stops
+
+Returns served stops which are not part of the schedule. I.e., this is the
+set of actual stops (B<route_post>) minus the set of scheduled stops
+(B<sched_route_post>).
+
 =item $result->arrival
 
 DateTime(3pm) object for the arrival date and time. undef if the
 train starts here. Contains realtime data if available.
+
+=item $result->canceled_stops
+
+Returns stops which are scheduled, but will not be served by this train.
+I.e., this is the set of scheduled stops (B<sched_route_post>) minus the set of
+actual stops (B<route_post>).
 
 =item $result->classes
 
@@ -834,7 +907,7 @@ Source: Correlation between IRIS and DB RIS (bahn.de).
 
 =item d  8 : "Notarzteinsatz am Gleis"
 
-=item d 9 : "Streikauswirkungen"
+=item d  9 : "Streikauswirkungen"
 
 =item d 10 : "Ausgebrochene Tiere im Gleis"
 
@@ -911,6 +984,10 @@ so may be wrong.
 
 Source: Correlation between IRIS and DB RIS (bahn.de). Several entries, related
 to "Notarzteinsatz am Gleis".
+
+=item d 62 : "Behobene technische StE<ouml>rung am Zug"
+
+Source: Correlation between IRIS and DB RIS (bahn.de).
 
 =item d 63 : "Technische Untersuchung am Zug"
 

@@ -6,7 +6,7 @@ use 5.014;
 
 no if $] >= 5.018, warnings => 'experimental::smartmatch';
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 use Carp qw(confess cluck);
 use DateTime;
@@ -253,18 +253,20 @@ sub get_realtime {
 		}
 		if ($e_ar) {
 			$result->add_ar(
-				arrival_ts => $e_ar->getAttribute('ct'),
-				platform   => $e_ar->getAttribute('cp'),
-				route_pre  => $e_ar->getAttribute('cpth'),
-				status     => $e_ar->getAttribute('cs'),
+				arrival_ts      => $e_ar->getAttribute('ct'),
+				platform        => $e_ar->getAttribute('cp'),
+				route_pre       => $e_ar->getAttribute('cpth'),
+				sched_route_pre => $e_ar->getAttribute('ppth'),
+				status          => $e_ar->getAttribute('cs'),
 			);
 		}
 		if ($e_dp) {
 			$result->add_dp(
-				departure_ts => $e_dp->getAttribute('ct'),
-				platform     => $e_dp->getAttribute('cp'),
-				route_post   => $e_dp->getAttribute('cpth'),
-				status       => $e_dp->getAttribute('cs'),
+				departure_ts     => $e_dp->getAttribute('ct'),
+				platform         => $e_dp->getAttribute('cp'),
+				route_post       => $e_dp->getAttribute('cpth'),
+				sched_route_post => $e_dp->getAttribute('ppth'),
+				status           => $e_dp->getAttribute('cs'),
 			);
 		}
 
@@ -318,7 +320,7 @@ Travel::Status::DE::IRIS - Interface to IRIS based web departure monitors.
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 DESCRIPTION
 
